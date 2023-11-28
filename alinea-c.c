@@ -1,177 +1,100 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
 
-// Gera a carta aleatória
+const unsigned int maxCartas = 64;
+const unsigned int valorMaxCarta = 63;
+const unsigned int valorMinCarta = 0;
+const unsigned int tamanhoDaCarta = 4; // Leva em consideração o '\0'
+const unsigned int maxPosicoes = 4;
+
+// Gera a carta aleatória de acordo com o número introduzido
 void gerarCarta(int numeroIntroduzido, char carta[4]);
 
+// Cria o baralho, armazenando as cartas no vetor "baralho"
 void criarBaralho(char baralho[64][4]);
 
 // Gera números aleatórios
 unsigned int randaux();
 
-// Embaralha as cartas no vetor "baralho"
+// Pede por input e invoca randaux um dado número de vezes
+void desperdicar();
+
+// Versão modificada para strings do algoritmo "baralhar" fornecido na alínea
 void baralhar(char baralho[64][4], int n);
 
-// Mostra o baralho, recebendo um vetor com as cartas que deve mostrar
-void mostrarBaralho(char baralho[64][4], bool jogando, int posicoesX[], int posicoesY[]);
+// Mostra o baralho
+void mostrarBaralho(char baralho[64][4], int posicoesX[], int posicoesY[]);
 
-// Pede uma jogada (string) ao jogador
-void pedirJogada(char jogada[], int maximoDeCartas);
+// Mostra a linha superior
+void mostrarLinhaSuperior();
 
-// Verifica se a jogada introduzida pelo usuário está dentro dos limites
-char *verificarJogada(char jogada[], char posicoes[]);
+// Pede as posições ao usuário e as armazena no vetor de posições. Caso sejam introduzidos valores inválidos, a função armazena os valores como 0, e futuramente não são utilizados pela função "mostrarBaralho"
+void pedirPosicoes(int posicoes[maxPosicoes]);
 
-void ordenarPorPar(char posicoes[]);
+// Ordena os valores recebidos pelo valor "Y" (a direita), para que possamos mostrar os valores na função "mostrarBaralho"
+void ordenarPorY(int posicoes[]);
 
-int *charParaInteiro(char posicoes[], int posicoesInt[]);
+// Recebe o vetor "posicoes" ja ordenado, e armazena os valores X e Y nos vetores correspondentes
+void separarPosicoes(int posicoes[maxPosicoes], int posicoesX[maxPosicoes], int posicoesY[maxPosicoes]);
+
+// Diminui os valores dentro dos vetores posicoesX e Y para serem usados na função "mostrarBaralho"
+void diminuirPosicoes(int posicoesX[maxPosicoes], int posicoesY[maxPosicoes]);
 
 int main(void)
 {
-  char carta[4];
-  char baralho[64][4];
-  int desperdicio;
-  char jogada[24];
-  char posicoes[64];
-  int posicoesInt[64];
-  bool jogando = false;
+  char carta[tamanhoDaCarta];
+  char baralho[maxCartas][tamanhoDaCarta];
+  int posicoes[maxPosicoes];
+  int posicoesX[maxPosicoes];
+  int posicoesY[maxPosicoes];
 
-  scanf("%d", &desperdicio);
-  getchar(); // para recolher o "\n" deixado por scanf
+  desperdicar();
 
-  for (int i = 0; i < desperdicio; i++)
-  {
-    randaux();
-  }
+  criarBaralho(baralho);
 
-  // Preenchendo todos os elementos do baralho com as respectivas cartas (em ordem)
-  for (int i = 0; i < 64; i++)
-  {
-    gerarCarta(i, baralho[i]);
-  }
+  baralhar(baralho, maxCartas);
 
-  baralhar(baralho, 64);
+  pedirPosicoes(posicoes);
 
-  pedirJogada(jogada, 4);
+  ordenarPorY(posicoes);
 
-  verificarJogada(jogada, posicoes);
-  printf("%s\n", posicoes);
+  separarPosicoes(posicoes, posicoesX, posicoesY);
 
-  ordenarPorPar(posicoes);
+  diminuirPosicoes(posicoesX, posicoesY);
 
-  printf("%s\n", posicoes);
-
-  charParaInteiro(posicoes, posicoesInt);
-
-  int posicoesX[64];
-  int posicoesY[64];
-
-  int j = 0;
-  int k = 0;
-  for (int i = 0; i < 8; i++)
-  {
-    if (i % 2 == 0)
-    {
-      posicoesX[j++] = posicoesInt[i];
-    }
-    else
-    {
-      posicoesY[k++] = posicoesInt[i];
-    }
-  }
-
-  mostrarBaralho(baralho, true, posicoesX, posicoesY);
+  mostrarBaralho(baralho, posicoesX, posicoesY);
 
   return 0;
 }
 
-int *charParaInteiro(char posicoes[], int posicoesInt[])
+void gerarCarta(int numeroIntroduzido, char carta[tamanhoDaCarta])
 {
-  for (int i = 0; posicoes[i] != '\0'; i++)
-  {
-    posicoesInt[i] = (posicoes[i] - '0') - 1;
-  }
-  return posicoesInt;
-}
-
-void ordenarPorPar(char jogada[])
-{
-  int len = strlen(jogada);
-
-  // Check if the length is odd and adjust it
-  if (len % 2 != 0)
-  {
-    len--;
-  }
-
-  // Sort the string by pairs based on the second digit
-  for (int i = 0; i < len; i += 2)
-  {
-    // Find the maximum element in each pair starting from the second digit
-    int maxIndex = i + 1;
-    for (int j = i + 3; j < len; j += 2)
-    {
-      if (jogada[j] < jogada[maxIndex])
-      {
-        maxIndex = j;
-      }
-    }
-
-    // Swap the maximum element with the second element in the pair
-    if (i + 1 != maxIndex)
-    {
-      char temp = jogada[i + 1];
-      jogada[i + 1] = jogada[maxIndex];
-      jogada[maxIndex] = temp;
-
-      // Swap the corresponding first element in the pair
-      temp = jogada[i];
-      jogada[i] = jogada[maxIndex - 1];
-      jogada[maxIndex - 1] = temp;
-    }
-  }
-}
-
-void gerarCarta(int numeroIntroduzido, char carta[4])
-{
-  if (numeroIntroduzido < 0 || numeroIntroduzido > 63)
-  {
-    printf("Carta invalida\n");
-    exit(2);
-  }
-
-  int numeroDaCarta = '1';
-  char letraDaCarta = 'A';
-  char operacoes[4] = {'+', '-', '*', '/'};
+  char letrasDasCartas[4] = {'A', 'B', 'C', 'D'};
+  char operacoesDasCartas[4] = {'+', '-', '*', '/'};
   char operacaoDaCarta;
+  char numeroDaCarta;
+  char letraDaCarta;
 
-  int index = (numeroIntroduzido) / 16; // Para definir o sinal da carta
+  int indexOperacoes = numeroIntroduzido / 16; // Determina a operacao
+  int indexLetra = numeroIntroduzido % 4;      // Determina a letra
 
-  operacaoDaCarta = operacoes[index];
+  operacaoDaCarta = operacoesDasCartas[indexOperacoes];
 
-  for (int i = 0; i <= numeroIntroduzido; i++)
+  letraDaCarta = letrasDasCartas[indexLetra];
+
+  // A cada 4 numeros, o número da carta aumenta, mas a cada 16, volta a '1'
+  numeroDaCarta = '1' + ((numeroIntroduzido % 16) / 4);
+
+  carta[0] = operacaoDaCarta;
+  carta[1] = numeroDaCarta;
+  carta[2] = letraDaCarta;
+  carta[3] = '\0';
+}
+
+void criarBaralho(char baralho[maxCartas][tamanhoDaCarta])
+{
+  for (int i = 0; i < maxCartas; i++)
   {
-    if (i > 0)
-    {
-      letraDaCarta++;
-    }
-    if (i % 4 == 0 && i != 0)
-    {
-      numeroDaCarta++;
-      letraDaCarta = 'A';
-    }
-    if (i % 16 == 0 && i != 0)
-    {
-      numeroDaCarta = '1';
-    }
-    if (i == numeroIntroduzido) // Quando alcançamos o número da carta desejada
-    {
-      carta[0] = operacaoDaCarta;
-      carta[1] = numeroDaCarta;
-      carta[2] = letraDaCarta;
-      carta[3] = '\0';
-    }
+    gerarCarta(i, baralho[i]);
   }
 }
 
@@ -181,15 +104,29 @@ unsigned int randaux()
   return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7fff);
 }
 
-// Versão modificada da função baralhar (para suportar strings)
-void baralhar(char baralho[64][4], int n)
+void desperdicar()
+{
+  int desperdicio;
+  scanf("%d", &desperdicio);
+  if (desperdicio < 0)
+  {
+    desperdicio = 0;
+  }
+
+  for (int i = 0; i < desperdicio; i++)
+  {
+    randaux();
+  }
+}
+
+void baralhar(char baralho[maxCartas][tamanhoDaCarta], int maxCartas)
 {
   int i, j, k;
-  int aux[4]; // string auxiliar
+  int aux[tamanhoDaCarta]; // string auxiliar
 
-  for (i = 0; i < n - 1; i++)
+  for (i = 0; i < maxCartas - 1; i++)
   {
-    j = i + randaux() % (n - i);
+    j = i + randaux() % (maxCartas - i);
 
     for (k = 0; k < 4; k++)
     {
@@ -198,94 +135,115 @@ void baralhar(char baralho[64][4], int n)
       baralho[j][k] = aux[k];
     }
   }
-  return;
 }
 
-void mostrarBaralho(char baralho[64][4], bool jogando, int posicoesX[], int posicoesY[])
+void mostrarBaralho(char baralho[maxCartas][tamanhoDaCarta], int posicoesX[], int posicoesY[])
 {
-  // Espaço na esquerda
-  for (int i = 0; i < 4; i++)
+  mostrarLinhaSuperior();
+
+  // Para que possamos mostrar as cartas 0, 8, 16, 24...
+  int multiplos[8] = {0, 8, 16, 24, 32, 40, 48, 56};
+  int k = 1;
+  int l = 0, m = 0;
+  for (int i = 0; i < 8; i++)
+  {
+    printf("[%d] ", k++);
+    for (int j = 0; j < 8; j++)
+    {
+      if (posicoesY[l] == -1 || posicoesX[m] == -1)
+      {
+        l++, m++;
+        printf("### ");
+        multiplos[j]++; // Temos que mover pelas cartas do baralho na mesma
+      }
+      else if (i == posicoesY[l] && j == posicoesX[m])
+      {
+        printf("%s ", baralho[multiplos[j]++]);
+        l++, m++;
+      }
+      else
+      {
+        printf("### ");
+        multiplos[j]++; // Temos que mover pelas cartas do baralho na mesma
+      }
+    }
+    putchar('\n');
+  }
+}
+
+void mostrarLinhaSuperior()
+{
+  for (int i = 0; i < 4; i++) // Linha na esquerda
   {
     putchar(' ');
   }
 
-  // Linha superior
-  for (int i = 1; i <= 8; i++)
-  {
-    printf("[%d] ", i);
-  }
-  putchar('\n');
-
-  int indexBaralho[8] = {0, 8, 16, 24, 32, 40, 48, 56};
-  int x = 0, y = 0;
   for (int i = 0; i < 8; i++)
   {
     printf("[%d] ", i + 1);
-    for (int j = 0; j < 8; j++)
-    {
-      if (j == posicoesX[x] && i == posicoesY[y] && jogando == true)
-      {
-        printf("%s ", baralho[indexBaralho[j]++]);
-        j++;
-        x++;
-        y++;
-        if (j > 7) // Para evitar o bug de mostrar "xxx" a mais
-        {
-          break;
-        }
-      }
-      // printf("%s ", baralho[indexBaralho[j]++]);
-      printf("### ");
-      indexBaralho[j]++;
-    }
-    printf("\n");
   }
   putchar('\n');
-  return;
 }
 
-void criarBaralho(char baralho[64][4])
+void pedirPosicoes(int posicoes[maxPosicoes])
 {
-  for (int i = 0; i < 64; i++)
-  {
-    gerarCarta(i, baralho[i]);
-  }
-  return;
-}
-
-void pedirJogada(char jogada[], int maximoDeCartas)
-{
-  int tamanhoDaString = 12;
-  fgets(jogada, tamanhoDaString, stdin);
-  return;
-}
-
-char *verificarJogada(char jogada[], char posicoes[])
-{
-  char delimitador = ' ';
-
-  // Divide a string em várias strings:
-  char *posicao = strtok(jogada, &delimitador);
-
   int i = 0;
-  while (posicao != NULL)
+  for (int i = 0; i < maxPosicoes; i++)
   {
-    int tamanho = strlen(posicao);
-    if (tamanho < 3 && (posicao[0] >= '1' && posicao[1] >= '1') && (posicao[0] <= '8' && posicao[1] <= '8'))
+    scanf("%d", &posicoes[i]);
+  }
+
+  // Se passarmos um número fora dos limites do vetor, as posições dali em diante serão 0
+  for (int i = 0; i < maxPosicoes; i++)
+  {
+    if (posicoes[i] > 88 || posicoes[i] < 11)
     {
-      int j = 0;
-      while (posicao[j] != '\0') // Passsando as strings para "posicoes"
+      while (i < maxPosicoes)
       {
-        posicoes[i++] = posicao[j++];
+        posicoes[i] = 0;
+        i++;
       }
     }
-    else
+  }
+}
+
+void ordenarPorY(int posicoes[])
+{
+  int aux;
+  for (int i = 0; i < maxPosicoes - 1; i++)
+  {
+    int sorting = 0;
+    for (int j = i; j < maxPosicoes; j++)
+    {
+      if ((posicoes[i] % 10) > (posicoes[j] % 10))
+      {
+        sorting = 1;
+        aux = posicoes[j];
+        posicoes[j] = posicoes[i];
+        posicoes[i] = aux;
+      }
+    }
+    if (sorting == 0)
     {
       break;
     }
-
-    posicao = strtok(NULL, &delimitador);
   }
-  posicoes[i] = '\0';
-  return posicoes;
+}
+
+void separarPosicoes(int posicoes[maxPosicoes], int posicoesX[maxPosicoes], int posicoesY[maxPosicoes])
+{
+  for (int i = 0; i < maxPosicoes; i++)
+  {
+    posicoesX[i] = posicoes[i] / 10; // Pega o valor da esquerda (63) -> 6
+    posicoesY[i] = posicoes[i] % 10; // Pega o valor da direita
+  }
+}
+
+void diminuirPosicoes(int posicoesX[maxPosicoes], int posicoesY[maxPosicoes])
+{
+  for (int i = 0; i < maxPosicoes; i++)
+  {
+    posicoesX[i] = posicoesX[i] - 1;
+    posicoesY[i] = posicoesY[i] - 1;
+  }
 }
