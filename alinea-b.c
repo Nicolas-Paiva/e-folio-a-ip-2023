@@ -1,81 +1,83 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+const unsigned int maxCartas = 64;
+const unsigned int valorMaxCarta = 63;
+const unsigned int valorMinCarta = 0;
+const unsigned int tamanhoDaCarta = 4; // Leva em consideração o '\0'
+
+// Gera a carta aleatória de acordo com o número introduzido
 void gerarCarta(int numeroIntroduzido, char carta[4]);
 
-void criarBaralho(char baralho[62][4]);
+// Cria o baralho, armazenando as cartas no vetor "baralho"
+void criarBaralho(char baralho[64][4]);
 
+// Gera números aleatórios
 unsigned int randaux();
 
+// Pede por input e invoca randaux um dado número de vezes
+void desperdicar();
+
+// Versão modificada para strings do algoritmo "baralhar" fornecido na alínea
 void baralhar(char baralho[64][4], int n);
 
+// Mostra o baralho
 void mostrarBaralho(char baralho[64][4]);
+
+// Mostra a linha superior
+void mostrarLinhaSuperior();
 
 int main(void)
 {
-  char carta[4];
-  char baralho[64][4];
-  int desperdicio;
+  char carta[tamanhoDaCarta];
+  char baralho[maxCartas][tamanhoDaCarta];
 
-  scanf("%d", &desperdicio);
+  desperdicar();
 
-  for (int i = 0; i < desperdicio; i++)
-  {
-    randaux();
-  }
+  criarBaralho(baralho);
 
-  // Preenchendo todos os elementos do baralho com as respectivas cartas (em ordem)
-  for (int i = 0; i < 64; i++)
-  {
-    gerarCarta(i, baralho[i]);
-  }
-
-  baralhar(baralho, 64);
+  baralhar(baralho, maxCartas);
 
   mostrarBaralho(baralho);
 
   return 0;
 }
 
-void gerarCarta(int numeroIntroduzido, char carta[4])
+void gerarCarta(int numeroIntroduzido, char carta[tamanhoDaCarta])
 {
-  if (numeroIntroduzido < 0 || numeroIntroduzido > 63)
+  if (numeroIntroduzido < valorMinCarta || numeroIntroduzido > valorMaxCarta)
   {
     printf("Carta invalida\n");
-    exit(2);
+    exit(1); // Para não mostrar nenhuma carta
   }
 
-  int numeroDaCarta = '1';
-  char letraDaCarta = 'A';
-  char operacoes[4] = {'+', '-', '*', '/'};
+  char letrasDasCartas[4] = {'A', 'B', 'C', 'D'};
+  char operacoesDasCartas[4] = {'+', '-', '*', '/'};
   char operacaoDaCarta;
+  char numeroDaCarta;
+  char letraDaCarta;
 
-  int index = (numeroIntroduzido) / 16; // Para definir o sinal da carta
+  int indexOperacoes = numeroIntroduzido / 16; // Determina a operacao
+  int indexLetra = numeroIntroduzido % 4;      // Determina a letra
 
-  operacaoDaCarta = operacoes[index];
+  operacaoDaCarta = operacoesDasCartas[indexOperacoes];
 
-  for (int i = 0; i <= numeroIntroduzido; i++)
+  letraDaCarta = letrasDasCartas[indexLetra];
+
+  // A cada 4 numeros, o número da carta aumenta, mas a cada 16, volta a '1'
+  numeroDaCarta = '1' + ((numeroIntroduzido % 16) / 4);
+
+  carta[0] = operacaoDaCarta;
+  carta[1] = numeroDaCarta;
+  carta[2] = letraDaCarta;
+  carta[3] = '\0';
+}
+
+void criarBaralho(char baralho[maxCartas][tamanhoDaCarta])
+{
+  for (int i = 0; i < maxCartas; i++)
   {
-    if (i > 0)
-    {
-      letraDaCarta++;
-    }
-    if (i % 4 == 0 && i != 0)
-    {
-      numeroDaCarta++;
-      letraDaCarta = 'A';
-    }
-    if (i % 16 == 0 && i != 0)
-    {
-      numeroDaCarta = '1';
-    }
-    if (i == numeroIntroduzido) // Quando alcançamos o número da carta desejada
-    {
-      carta[0] = operacaoDaCarta;
-      carta[1] = numeroDaCarta;
-      carta[2] = letraDaCarta;
-      carta[3] = '\0';
-    }
+    gerarCarta(i, baralho[i]);
   }
 }
 
@@ -85,15 +87,29 @@ unsigned int randaux()
   return (((seed = seed * 214013L + 2531011L) >> 16) & 0x7fff);
 }
 
-// Versão modificada da função baralhar (para suportar strings)
-void baralhar(char baralho[64][4], int n)
+void desperdicar()
+{
+  int desperdicio;
+  scanf("%d", &desperdicio);
+  if (desperdicio < 0)
+  {
+    desperdicio = 0;
+  }
+
+  for (int i = 0; i < desperdicio; i++)
+  {
+    randaux();
+  }
+}
+
+void baralhar(char baralho[maxCartas][tamanhoDaCarta], int maxCartas)
 {
   int i, j, k;
-  int aux[4]; // string auxiliar
+  int aux[tamanhoDaCarta]; // string auxiliar
 
-  for (i = 0; i < n - 1; i++)
+  for (i = 0; i < maxCartas - 1; i++)
   {
-    j = i + randaux() % (n - i);
+    j = i + randaux() % (maxCartas - i);
 
     for (k = 0; k < 4; k++)
     {
@@ -104,30 +120,36 @@ void baralhar(char baralho[64][4], int n)
   }
 }
 
-void mostrarBaralho(char baralho[64][4])
+void mostrarBaralho(char baralho[maxCartas][tamanhoDaCarta])
 {
-  // Espaço na esquerda
-  for (int i = 0; i < 4; i++)
+  mostrarLinhaSuperior();
+
+  int k = 1;
+
+  // Para que possamos mostrar as cartas 0, 8, 16, 24...
+  int multiplos[8] = {0, 8, 16, 24, 32, 40, 48, 56};
+
+  for (int i = 0; i < 8; i++)
+  {
+    printf("[%d] ", k++);
+    for (int j = 0; j < 8; j++)
+    {
+      printf("%s ", baralho[multiplos[j]++]); // Aumenta o valor do vetor de multiplos
+    }
+    putchar('\n');
+  }
+}
+
+void mostrarLinhaSuperior()
+{
+  for (int i = 0; i < 4; i++) // Linha na esquerda
   {
     putchar(' ');
   }
 
-  // Linha superior
-  for (int i = 1; i <= 8; i++)
-  {
-    printf("[%d] ", i);
-  }
-  putchar('\n');
-
-  int indexBaralho[8] = {0, 8, 16, 24, 32, 40, 48, 56};
   for (int i = 0; i < 8; i++)
   {
     printf("[%d] ", i + 1);
-    for (int j = 0; j < 8; j++)
-    {
-      // Uma vez que mostramos baralho[0], 0 se torna 1, mas baralho[1] só é mostrado na proxuma linha
-      printf("%s ", baralho[indexBaralho[j]++]);
-    }
-    printf("\n");
   }
+  putchar('\n');
 }
